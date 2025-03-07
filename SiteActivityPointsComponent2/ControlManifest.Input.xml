@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<manifest>
+  <control namespace="SampleNamespace" constructor="SiteActivityPointsComponent2" version="0.0.1" display-name-key="SiteActivityPointsComponent2" description-key="SiteActivityPointsComponent2 description" control-type="standard" >
+    <external-service-usage enabled="false">
+    </external-service-usage>
+    
+    <data-set name="locationDataSet" display-name-key="LocationDataset_Display_Key">
+      <property-set name="latitude" display-name-key="Site Activity Point Latitude" description-key="Site_Activity_Point_Latitude_Desc_Key" of-type="FP" usage="bound" required="true" />
+      <property-set name="longitude" display-name-key="Site Activity Point Longitude" description-key="Site_Activity_Point_Longitude_Desc_Key" of-type="FP" usage="bound" required="true" />
+      <property-set name="name" display-name-key="Site Activity Point Name" description-key="Site_Activity_Point_Name_Desc_Key" of-type="SingleLine.Text" usage="bound" required="true" />
+      <property-set name="description" display-name-key="Site Activity Point Description" description-key="Site_Activity_Point_Description_Desc_key" of-type="SingleLine.TextArea" usage="bound" required="true" />
+      <property-set name="dateAndTime" display-name-key="Site Activity Point Date And Time" description-key="Site_Activity_Point_Date_And_Time_Desc_key" of-type="DateAndTime.DateAndTime" usage="bound" required="false" />
+      <property-set name="category" display-name-key="Site Activity Point Category" description-key="Site_Activity_Point_Category_Desc_key" of-type="Lookup.Simple" usage="bound" required="false" />
+    </data-set>
+
+    <property name="googleApiKey" display-name-key="Google Api Key" description-key="Google_Api_Key" of-type="SingleLine.Text" usage="input" required="true" />
+    <property name="initialLocationTableName" display-name-key="Initial Location Table Name" description-key="Initial_Location_Table_Name" of-type="SingleLine.Text" usage="input" required="false" />
+    <!-- <property name="initialFileUrlColumnName" display-name-key="Initial File Url Column Name" description-key="Initial_File_Url_Column_Name" of-type="SingleLine.Text" usage="input" required="false" /> -->
+    <property name="initialFileColumnName" display-name-key="Initial File Column Name" description-key="Initial_File_Column_ Name" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="mapId" display-name-key="Map Id" description-key="Map_Id" of-type="SingleLine.Text" usage="input" required="false"/>
+    <property name="markerLabelProperty" display-name-key="Marker Label Property" description-key="Marker_Label_Property" of-type="SingleLine.Text" usage="input" required="false"/>
+
+    <resources>
+      <code path="index.ts" order="1"/>
+      <css path="css/SiteActivityPointsComponent2.css" order="1" />
+      <!-- UNCOMMENT TO ADD MORE RESOURCES
+      <css path="css/SiteActivityPointsComponent2.css" order="1" />
+      <resx path="strings/SiteActivityPointsComponent2.1033.resx" version="1.0.0" />
+      -->
+    </resources>
+    <feature-usage>
+      <uses-feature name="WebAPI" required="true" />
+    </feature-usage>
+    <!-- UNCOMMENT TO ENABLE THE SPECIFIED API
+    <feature-usage>
+      <uses-feature name="Device.captureAudio" required="true" />
+      <uses-feature name="Device.captureImage" required="true" />
+      <uses-feature name="Device.captureVideo" required="true" />
+      <uses-feature name="Device.getBarcodeValue" required="true" />
+      <uses-feature name="Device.getCurrentPosition" required="true" />
+      <uses-feature name="Device.pickFile" required="true" />
+      <uses-feature name="Utility" required="true" />
+      <uses-feature name="WebAPI" required="true" />
+    </feature-usage>
+    -->
+  </control>
+</manifest>
