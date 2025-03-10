@@ -8,7 +8,9 @@ import * as geoJSONStyleHelper from './helpers/geojson-style-helper';
 import * as markerHelper from './helpers/marker-helper';
 import * as config from './configuration/configuration';
 
-export class SiteActivityPointsComponent2 implements ComponentFramework.StandardControl<IInputs, IOutputs> {
+
+
+export class SiteActivityPointsComponent implements ComponentFramework.StandardControl<IInputs, IOutputs> {
     private container: HTMLDivElement;
     private context: ComponentFramework.Context<IInputs>;
     private notifyOutputChanged: () => void;
@@ -44,6 +46,7 @@ export class SiteActivityPointsComponent2 implements ComponentFramework.Standard
         console.log('Params initialLocationTableName: ', this.initialLocationTableName);
 
         this.initPromise = new Promise<void>((resolve, reject) => {
+
             this.loadGoogleMaps(this.context.parameters.googleApiKey.raw as string)
                 .then(() => {
                     console.log('Google Maps API loaded successfully.');
@@ -90,7 +93,7 @@ export class SiteActivityPointsComponent2 implements ComponentFramework.Standard
 
                 this.geoJSON = this.getGeoJsonFromDataset(context.parameters.locationDataSet);
                 console.log('This GEOJSON: ', this.geoJSON);
-                    
+
                 this.applyCenterAndZoomBoundsOnMap(this.geoJSON);
 
                 this.displayGeoJSONFromDataSet();
@@ -101,7 +104,7 @@ export class SiteActivityPointsComponent2 implements ComponentFramework.Standard
             console.log("init was not called yet");
         }
     }
-    
+
     public getOutputs(): IOutputs {
         return {};
     }
@@ -150,6 +153,7 @@ export class SiteActivityPointsComponent2 implements ComponentFramework.Standard
     }
 
     private applyInitialGeoJSONStyles(): void {
+
         if(!this.map) {
             return;
         }
@@ -162,18 +166,18 @@ export class SiteActivityPointsComponent2 implements ComponentFramework.Standard
             
             const coordinates = dataset.sortedRecordIds.reduce(
                 (arr: { latitude: number; longitude: number; properties: GeoJsonProperties }[], recordId) => {
-                    
-                    const record = dataset.records[recordId];
-                    
-                    arr.push({
-                        latitude: (record.getValue('latitude') as number),
-                        longitude: (record.getValue('longitude') as number),
-                        properties: {
-                            [FeatureProperty.Name]: record.getValue('name') as string,
-                            [FeatureProperty.Description]: record.getValue('description') as string,
-                            [FeatureProperty.Category]: (record.getValue('category') as any)?.name || null,
-                            [FeatureProperty.DateAndTime]: record.getValue('dateAndTime') || null
-                        }
+
+                const record = dataset.records[recordId];
+
+                arr.push({
+                    latitude: (record.getValue('latitude') as number),
+                    longitude: (record.getValue('longitude') as number),
+                    properties: {
+                        [FeatureProperty.Name]: record.getValue('name') as string,
+                        [FeatureProperty.Description]: record.getValue('description') as string,
+                        [FeatureProperty.Category]: (record.getValue('category') as any)?.name || null,
+                        [FeatureProperty.DateAndTime]: record.getValue('dateAndTime') || null
+                    }
                 });
                 return arr;
             },[]);
@@ -315,7 +319,7 @@ export class SiteActivityPointsComponent2 implements ComponentFramework.Standard
             
                     console.log('ABOUT TO OPEN INFO WINDOW')
                     this.infoWindow.open(this.map);
-                }                
+                } 
             }
         );
     }
@@ -326,7 +330,7 @@ export class SiteActivityPointsComponent2 implements ComponentFramework.Standard
         this.infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -20), maxWidth: config.maxInfoWindowWidthInPx, minWidth: config.minInfoWindowWidthInPx });
         (this.infoWindow as any).setHeaderContent(headerContent);
     }
-
+ 
     private addGeoJSONOnMap(geoJSON: FeatureCollection<Geometry | null, GeoJsonProperties> | null): void {
         if (!geoJSON || !this.map) {
             return;
@@ -358,6 +362,7 @@ export class SiteActivityPointsComponent2 implements ComponentFramework.Standard
             const infoWindowContent = markerHelper.createInfoWindowContent(description, dateAndTimeText, category);
 
             const markerContent = markerHelper.createMarkerContent(feature.properties, this.markerLabelProp);
+
             const marker = this.createMarkerElement(latLng, markerContent, true);
 
             if (marker) {
@@ -388,7 +393,7 @@ export class SiteActivityPointsComponent2 implements ComponentFramework.Standard
             content,
             gmpClickable: clickable
         });
-    }
+    }   
 
     private applyCenterAndZoomBoundsOnMap(geoJSON: FeatureCollection<Geometry | null, GeoJsonProperties> | null ): void {
         if (!geoJSON) {
