@@ -1,9 +1,9 @@
 {
     "manifestVersion": 1,
-    "name": "SiteActivityPointsComponent2",
+    "name": "ActivityMapPointsComponent2",
     "version": "1.0.0",
     "controlNamespace": "MyNamespace",
-    "controlName": "SiteActivityPointsComponent2",
+    "controlName": "ActivityMapPointsComponent2",
     "description": "My PCF Component",
     "codePath": "src/index.ts",
     "outDir": "./out/controls"

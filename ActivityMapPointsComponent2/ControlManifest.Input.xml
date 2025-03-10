@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <manifest>
-  <control namespace="SampleNamespace" constructor="SiteActivityPointsComponent2" version="0.0.1" display-name-key="SiteActivityPointsComponent2" description-key="SiteActivityPointsComponent2 description" control-type="standard" >
+  <control namespace="SampleNamespace" constructor="ActivityMapPointsComponent2" version="0.0.1" display-name-key="ActivityMapPointsComponent2" description-key="ActivityMapPointsComponent2 description" control-type="standard" >
     <external-service-usage enabled="false">
     </external-service-usage>
     
@@ -22,11 +22,7 @@
 
     <resources>
       <code path="index.ts" order="1"/>
-      <css path="css/SiteActivityPointsComponent2.css" order="1" />
-      <!-- UNCOMMENT TO ADD MORE RESOURCES
-      <css path="css/SiteActivityPointsComponent2.css" order="1" />
-      <resx path="strings/SiteActivityPointsComponent2.1033.resx" version="1.0.0" />
-      -->
+      <css path="css/ActivityMapPointsComponent2.css" order="1" />
     </resources>
     <feature-usage>
       <uses-feature name="WebAPI" required="true" />

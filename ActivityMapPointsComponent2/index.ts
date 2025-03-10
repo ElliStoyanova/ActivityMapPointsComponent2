@@ -10,7 +10,7 @@ import * as config from './configuration/configuration';
 
 
 
-export class SiteActivityPointsComponent implements ComponentFramework.StandardControl<IInputs, IOutputs> {
+export class ActivityMapPointsComponent2 implements ComponentFramework.StandardControl<IInputs, IOutputs> {
     private container: HTMLDivElement;
     private context: ComponentFramework.Context<IInputs>;
     private notifyOutputChanged: () => void;
