@@ -36,7 +36,7 @@ export function createInfoWindowContent( description: string, dateAndTime?: stri
     return outerDiv;
 }
 
-export function createMarkerContent(featureProperties: GeoJsonProperties, markerLabelProp: MarkerLabelProperty): Node | null {
+export function createMarkerContent(featureProperties: GeoJsonProperties, markerLabelProp: MarkerLabelProperty | null): Node | null {
     const markerContent = document.createElement('div');
     markerContent.style.position = 'relative';
 
@@ -55,8 +55,8 @@ export function createMarkerContent(featureProperties: GeoJsonProperties, marker
     return markerContent;
 }
 
-export function getLabelElement(featureProperties: GeoJsonProperties, markerLabelProp: MarkerLabelProperty): HTMLElement | null {
-    if (!featureProperties) {
+export function getLabelElement(featureProperties: GeoJsonProperties, markerLabelProp: MarkerLabelProperty | null): HTMLElement | null {
+    if (!featureProperties || !markerLabelProp) {
         return null;
     }
 

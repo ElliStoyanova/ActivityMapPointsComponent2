@@ -21,7 +21,7 @@ export class SiteActivityPointsComponent2 implements ComponentFramework.Standard
     private initialLocationTableName: string;
     private initialFileColumnName: string;
     private mapId: string;
-    private markerLabelProp: MarkerLabelProperty;
+    private markerLabelProp: MarkerLabelProperty | null;
     private initPromise: Promise<void> | null = null;
     private markers: google.maps.marker.AdvancedMarkerElement[] = [];
     private eventListeners: google.maps.MapsEventListener[] = [];
@@ -77,6 +77,60 @@ export class SiteActivityPointsComponent2 implements ComponentFramework.Standard
         });
 
         return this.initPromise;                    
+    }
+
+    public async updateView(context: ComponentFramework.Context<IInputs>): Promise<void> {
+
+        console.log('CONTEXT in update view: ', context);
+
+        if (this.initPromise) {
+            try {
+                await this.initPromise; // Wait for init to complete
+                console.log("init finished, updateView can continue");
+
+                this.geoJSON = this.getGeoJsonFromDataset(context.parameters.locationDataSet);
+                console.log('This GEOJSON: ', this.geoJSON);
+                    
+                this.applyCenterAndZoomBoundsOnMap(this.geoJSON);
+
+                this.displayGeoJSONFromDataSet();
+            } catch (error) {
+                console.error("Error waiting for init:", error);
+            }
+        } else {
+            console.log("init was not called yet");
+        }
+    }
+    
+    public getOutputs(): IOutputs {
+        return {};
+    }
+
+    public destroy(): void {
+        this.eventListeners.forEach(listener => {
+            google.maps.event.removeListener(listener);
+        });
+        this.eventListeners = [];
+
+        this.markers.forEach(marker => {
+            marker.map = null;
+        });
+        this.markers = [];
+
+        if (this.map) {
+            google.maps.event.clearInstanceListeners(this.map);
+            const mapContainer = this.map.getDiv();
+            if (mapContainer && mapContainer.parentNode) {
+                mapContainer.parentNode.removeChild(mapContainer);
+            }
+            this.map = null;    
+        }
+        
+        if (this.container) {
+            this.container.innerHTML = '';
+        }
+    
+        console.log('Component destroyed and resources cleaned up.');
     }
 
     private setContainerSize(): void {
@@ -336,29 +390,6 @@ export class SiteActivityPointsComponent2 implements ComponentFramework.Standard
         });
     }
 
-    public async updateView(context: ComponentFramework.Context<IInputs>): Promise<void> {
-
-        console.log('CONTEXT in update view: ', context);
-
-        if (this.initPromise) {
-            try {
-                await this.initPromise; // Wait for init to complete
-                console.log("init finished, updateView can continue");
-
-                this.geoJSON = this.getGeoJsonFromDataset(context.parameters.locationDataSet);
-                console.log('This GEOJSON: ', this.geoJSON);
-                    
-                this.applyCenterAndZoomBoundsOnMap(this.geoJSON);
-
-                this.displayGeoJSONFromDataSet();
-            } catch (error) {
-                console.error("Error waiting for init:", error);
-            }
-        } else {
-            console.log("init was not called yet");
-        }
-    }
-
     private applyCenterAndZoomBoundsOnMap(geoJSON: FeatureCollection<Geometry | null, GeoJsonProperties> | null ): void {
         if (!geoJSON) {
             return;
@@ -372,38 +403,5 @@ export class SiteActivityPointsComponent2 implements ComponentFramework.Standard
             console.log('Map bounds after fitting bounds: ', this.map?.getBounds()?.toJSON());
             console.log('Map after fitting bounds: ', this.map);
         }
-    }
-
-
-    public getOutputs(): IOutputs {
-        return {};
-    }
-
-
-    public destroy(): void {
-        this.eventListeners.forEach(listener => {
-            google.maps.event.removeListener(listener);
-        });
-        this.eventListeners = [];
-
-        this.markers.forEach(marker => {
-            marker.map = null;
-        });
-        this.markers = [];
-
-        if (this.map) {
-            google.maps.event.clearInstanceListeners(this.map);
-            const mapContainer = this.map.getDiv();
-            if (mapContainer && mapContainer.parentNode) {
-                mapContainer.parentNode.removeChild(mapContainer);
-            }
-            this.map = null;    
-        }
-        
-        if (this.container) {
-            this.container.innerHTML = '';
-        }
-    
-        console.log('Component destroyed and resources cleaned up.');
     }
 }

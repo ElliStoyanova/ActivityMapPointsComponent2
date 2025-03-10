@@ -8,7 +8,7 @@
       <property-set name="latitude" display-name-key="Site Activity Point Latitude" description-key="Site_Activity_Point_Latitude_Desc_Key" of-type="FP" usage="bound" required="true" />
       <property-set name="longitude" display-name-key="Site Activity Point Longitude" description-key="Site_Activity_Point_Longitude_Desc_Key" of-type="FP" usage="bound" required="true" />
       <property-set name="name" display-name-key="Site Activity Point Name" description-key="Site_Activity_Point_Name_Desc_Key" of-type="SingleLine.Text" usage="bound" required="true" />
-      <property-set name="description" display-name-key="Site Activity Point Description" description-key="Site_Activity_Point_Description_Desc_key" of-type="SingleLine.TextArea" usage="bound" required="true" />
+      <property-set name="description" display-name-key="Site Activity Point Description" description-key="Site_Activity_Point_Description_Desc_key" of-type="SingleLine.TextArea" usage="bound" required="false" />
       <property-set name="dateAndTime" display-name-key="Site Activity Point Date And Time" description-key="Site_Activity_Point_Date_And_Time_Desc_key" of-type="DateAndTime.DateAndTime" usage="bound" required="false" />
       <property-set name="category" display-name-key="Site Activity Point Category" description-key="Site_Activity_Point_Category_Desc_key" of-type="Lookup.Simple" usage="bound" required="false" />
     </data-set>
