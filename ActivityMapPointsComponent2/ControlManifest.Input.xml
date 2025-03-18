@@ -5,12 +5,12 @@
     </external-service-usage>
     
     <data-set name="locationDataSet" display-name-key="LocationDataset_Display_Key">
-      <property-set name="latitude" display-name-key="Site Activity Point Latitude" description-key="Site_Activity_Point_Latitude_Desc_Key" of-type="FP" usage="bound" required="true" />
-      <property-set name="longitude" display-name-key="Site Activity Point Longitude" description-key="Site_Activity_Point_Longitude_Desc_Key" of-type="FP" usage="bound" required="true" />
-      <property-set name="name" display-name-key="Site Activity Point Name" description-key="Site_Activity_Point_Name_Desc_Key" of-type="SingleLine.Text" usage="bound" required="true" />
-      <property-set name="description" display-name-key="Site Activity Point Description" description-key="Site_Activity_Point_Description_Desc_key" of-type="SingleLine.TextArea" usage="bound" required="false" />
-      <property-set name="dateAndTime" display-name-key="Site Activity Point Date And Time" description-key="Site_Activity_Point_Date_And_Time_Desc_key" of-type="DateAndTime.DateAndTime" usage="bound" required="false" />
-      <property-set name="category" display-name-key="Site Activity Point Category" description-key="Site_Activity_Point_Category_Desc_key" of-type="Lookup.Simple" usage="bound" required="false" />
+      <property-set name="latitude" display-name-key="Activity Map Point Latitude" description-key="Activity_Map_Point_Latitude_Desc_Key" of-type="FP" usage="bound" required="true" />
+      <property-set name="longitude" display-name-key="Activity Map Point Longitude" description-key="Activity_Map_Point_Longitude_Desc_Key" of-type="FP" usage="bound" required="true" />
+      <property-set name="name" display-name-key="Activity Map Point Name" description-key="Activity_Map_Point_Name_Desc_Key" of-type="SingleLine.Text" usage="bound" required="false" />
+      <property-set name="description" display-name-key="Activity Map Point Description" description-key="Activity_Map_Point_Description_Desc_key" of-type="SingleLine.TextArea" usage="bound" required="false" />
+      <property-set name="dateAndTime" display-name-key="Activity Map Point Date And Time" description-key="Activity_Map_Point_Date_And_Time_Desc_key" of-type="DateAndTime.DateAndTime" usage="bound" required="false" />
+      <property-set name="category" display-name-key="Activity Map Point Category" description-key="Activity_Map_Point_Category_Desc_key" of-type="Lookup.Simple" usage="bound" required="false" />
     </data-set>
 
     <property name="googleApiKey" display-name-key="Google Api Key" description-key="Google_Api_Key" of-type="SingleLine.Text" usage="input" required="true" />
@@ -19,6 +19,7 @@
     <property name="initialFileColumnName" display-name-key="Initial File Column Name" description-key="Initial_File_Column_ Name" of-type="SingleLine.Text" usage="input" required="false" />
     <property name="mapId" display-name-key="Map Id" description-key="Map_Id" of-type="SingleLine.Text" usage="input" required="false"/>
     <property name="markerLabelProperty" display-name-key="Marker Label Property" description-key="Marker_Label_Property" of-type="SingleLine.Text" usage="input" required="false"/>
+    <property name="pageSize" display-name-key="Page Size" description-key="Page_Size" of-type="Decimal" usage="input" required="false"/>
 
     <resources>
       <code path="index.ts" order="1"/>

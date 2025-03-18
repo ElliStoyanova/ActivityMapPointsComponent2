@@ -1,8 +1,8 @@
 import { GeoJsonProperties } from 'geojson';
 import { FeatureProperty, MarkerLabelProperty } from '../interfaces/interfaces';
-import { defaultIconUrl } from '../configuration/configuration';
+import { defaultIconUrl, markerCountWarningText } from '../configuration/configuration';
 
-export function createInfoWindowContent( description: string, dateAndTime?: string, category?: string ): HTMLDivElement | null {
+export function createInfoWindowContent( description: string, dateAndTime?: string | null, category?: string | null): HTMLDivElement | null {
 
     if (!description && !dateAndTime && !category) {
         return null;
@@ -90,7 +90,7 @@ function getFeaturePropertyByMarkerLabelProperty(markerLabelProp: MarkerLabelPro
 }
 
 function getLabelElementByFeatureProperty(featureProperty: FeatureProperty, properties: GeoJsonProperties): HTMLDivElement | null {
-    if (!properties) {
+    if (!properties?.[featureProperty]) {
         return null;
     }
 
@@ -118,4 +118,15 @@ function getLabelElementByFeatureProperty(featureProperty: FeatureProperty, prop
     }
 
     return container;
+}
+
+export function getMarkerCountWarningElement(): HTMLElement {
+    const markerCountWarningContainer = document.createElement('div');
+    markerCountWarningContainer.className = 'marker-count-warning-container';
+    const markerCountWarning = document.createElement('div');
+    markerCountWarning.className = 'marker-count-warning';
+    markerCountWarning.textContent = markerCountWarningText;
+    markerCountWarningContainer.appendChild(markerCountWarning);
+
+    return markerCountWarningContainer;
 }

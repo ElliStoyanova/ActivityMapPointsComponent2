@@ -5,27 +5,27 @@ import { FeatureCollection, GeoJsonProperties, Geometry } from "geojson";
 
 export async function getInitialGeoJSONFromFile(downloadUrl: string, fileExtension: string): Promise< FeatureCollection<Geometry | null, GeoJsonProperties> | null > {
         
-    if(!downloadUrl) {
+    if(!downloadUrl || !fileExtension) {
         return null;
     }
 
     return fetch(downloadUrl)
         .then(async response => {
-            console.log('RESPONSE FROM FETCH CALL: ', response);
+            // console.log('RESPONSE FROM FETCH CALL: ', response);
             return response.blob();
         })
         .then(blob => blob.text())
         .then(fileText => {
-            console.log('FILE TEXT: ', fileText);
+            // console.log('FILE TEXT: ', fileText);
 
             if (fileExtension === 'json' || fileExtension === 'geojson') {
                 return JSON.parse(fileText);
             } else if (fileExtension === 'kml') {
-                console.log('GEOXML 3', geoXML3);
+                // console.log('GEOXML 3', geoXML3);
                 const kmlDoc = new DOMParser().parseFromString(fileText, 'text/xml');
-                console.log('fileDOC: ', kmlDoc);
+                // console.log('fileDOC: ', kmlDoc);
                 const initialGeoJSON = toGeoJSON.kml(kmlDoc);
-                console.log('initial geoJSON: ', initialGeoJSON);
+                // console.log('initial geoJSON: ', initialGeoJSON);
                 // const testGeoJSON = kml(kmlDoc);
                 // console.log('test geoJSON: ', JSON.stringify(testGeoJSON));
                 return initialGeoJSON;

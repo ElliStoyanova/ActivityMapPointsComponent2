@@ -1,13 +1,12 @@
 import { IInputs, IOutputs } from './generated/ManifestTypes';
 import { FeatureCollection, GeoJsonProperties, Geometry, Point } from 'geojson';
-import { FeatureProperty, MarkerLabelProperty } from './interfaces/interfaces';
+import { FeatureProperty, FeatureRecord, MarkerLabelProperty } from './interfaces/interfaces';
 import { getInitialGeoJSONFromFile } from './helpers/file-download-helper';
 import { getCenterAndZoomGeoJsonBounds } from './helpers/geojson-center-and-zoom-helper';
 import * as geoJSONBuildHelper from './helpers/geojson-build-helper';
 import * as geoJSONStyleHelper from './helpers/geojson-style-helper';
 import * as markerHelper from './helpers/marker-helper';
 import * as config from './configuration/configuration';
-
 
 
 export class ActivityMapPointsComponent2 implements ComponentFramework.StandardControl<IInputs, IOutputs> {
@@ -26,7 +25,12 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
     private markerLabelProp: MarkerLabelProperty | null;
     private initPromise: Promise<void> | null = null;
     private markers: google.maps.marker.AdvancedMarkerElement[] = [];
-    private eventListeners: google.maps.MapsEventListener[] = [];
+    private markerEventListeners: google.maps.MapsEventListener[] = [];
+    private featureRecords: FeatureRecord[] = [];
+    private featureRecordIds = new Set<string>();
+    private isDataLoading = false;
+    private pageSize: number;
+    private pageNumber = 0;
 
     constructor() {}
 
@@ -39,11 +43,13 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
         this.container = container;
         this.context = context;
 
-        console.log('CONTEXT in init: ', this.context);
+        console.log('CONTEXT in init: ', { ...this.context });
+        console.log('CONTEXT FILTER in update view: ', this.context.parameters.locationDataSet?.filtering?.getFilter());
   
         this.setContainerSize();
-        this.initializeParameters();     
-        console.log('Params initialLocationTableName: ', this.initialLocationTableName);
+        this.initializeParameters();   
+        // this.context.parameters.locationDataSet.paging.setPageSize(this.pageSize);  
+        // console.log('Params initialLocationTableName: ', this.initialLocationTableName);
 
         this.initPromise = new Promise<void>((resolve, reject) => {
 
@@ -64,9 +70,9 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
                 })
                 .then((preprocessedGeoJSON) => {
                     this.initialGeoJSON = preprocessedGeoJSON;
-                    console.log('INITIAL GEOJSON IN INIT(): ', JSON.stringify(this.initialGeoJSON));
+                    // console.log('INITIAL GEOJSON IN INIT(): ', JSON.stringify(this.initialGeoJSON));
                     this.addGeoJSONOnMap(this.initialGeoJSON);
-                    this.applyCenterAndZoomBoundsOnMap(this.initialGeoJSON);
+                    this.applyCenterAndZoomBoundsOnMap();
                     this.applyInitialGeoJSONStyles();
                     console.log('EVERYTHING IN INIT COMPLETED!');
                     resolve();
@@ -84,19 +90,44 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
 
     public async updateView(context: ComponentFramework.Context<IInputs>): Promise<void> {
 
-        console.log('CONTEXT in update view: ', context);
+        console.log('CONTEXT in update view: ', {...context});
+        console.log('CONTEXT FILTER in update view: ', context.parameters.locationDataSet?.filtering?.getFilter());
 
         if (this.initPromise) {
             try {
                 await this.initPromise; // Wait for init to complete
                 console.log("init finished, updateView can continue");
 
-                this.geoJSON = this.getGeoJsonFromDataset(context.parameters.locationDataSet);
-                console.log('This GEOJSON: ', this.geoJSON);
+                if (!context.parameters.locationDataSet.loading) {
 
-                this.applyCenterAndZoomBoundsOnMap(this.geoJSON);
+                    const datasetFeatureRecords = this.getFeatureRecords(context.parameters.locationDataSet);
+                    this.featureRecords = this.isDataLoading ? this.featureRecords.concat(datasetFeatureRecords) : datasetFeatureRecords;
+                    console.log('This FEATURE RECORDS: ', this.featureRecords);   
+                    console.log('HAS NEXT PAGE?: ',{ ...context.parameters.locationDataSet.paging }.hasNextPage);   
+                    this.toggleMarkerCountWarning();
 
-                this.displayGeoJSONFromDataSet();
+                    if (context.parameters.locationDataSet.paging?.hasNextPage === true && this.featureRecords.length < this.pageSize) {
+                    // if (context.parameters.locationDataSet.paging?.hasNextPage === true && this.featureRecords.length < config.maxMarkerCount) {
+
+                        
+                        this.isDataLoading = true;
+                        this.pageNumber = this.pageNumber + 1;
+                        console.log('About to load next page, pageNUmber: ', this.pageNumber);
+                        context.parameters.locationDataSet.paging.setPageSize(this.pageSize);                    
+                        // context.parameters.locationDataSet.paging.loadNextPage();                    
+                        context.parameters.locationDataSet.paging.loadExactPage(this.pageNumber);                    
+                    
+                    } else {              
+                        this.isDataLoading = false;     
+                        this.pageNumber = 0;  
+                        this.geoJSON = this.getGeoJsonFromFeatureRecords(this.featureRecords);
+                        console.log('This GEOJSON: ', this.geoJSON);
+        
+                        this.applyCenterAndZoomBoundsOnMap();        
+                        this.displayGeoJSONFromDataSet();                    
+                    }
+                }
+
             } catch (error) {
                 console.error("Error waiting for init:", error);
             }
@@ -110,15 +141,8 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
     }
 
     public destroy(): void {
-        this.eventListeners.forEach(listener => {
-            google.maps.event.removeListener(listener);
-        });
-        this.eventListeners = [];
 
-        this.markers.forEach(marker => {
-            marker.map = null;
-        });
-        this.markers = [];
+        this.clearMarkers();
 
         if (this.map) {
             google.maps.event.clearInstanceListeners(this.map);
@@ -146,6 +170,7 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
         this.initialFileColumnName = this.context.parameters.initialFileColumnName?.raw as string || config.initialFileColumnName;
         this.mapId = this.context.parameters.mapId?.raw as string || config.mapId;
         this.markerLabelProp = this.context.parameters.markerLabelProperty?.raw as MarkerLabelProperty || MarkerLabelProperty.Date;
+        this.pageSize = this.context.parameters.pageSize?.raw || config.defaultPageSize;
     }
 
     private initializeInfoWindow(): void {
@@ -161,32 +186,40 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
         this.map?.data?.setStyle(geoJSONStyleHelper.setStylesByFeatureType);  
     }
  
-    private getGeoJsonFromDataset(dataset: ComponentFramework.PropertyTypes.DataSet): FeatureCollection<Geometry, GeoJsonProperties> | null {
-        if (dataset?.sortedRecordIds && dataset?.sortedRecordIds.length) {
-            
-            const coordinates = dataset.sortedRecordIds.reduce(
-                (arr: { latitude: number; longitude: number; properties: GeoJsonProperties }[], recordId) => {
+    private getGeoJsonFromFeatureRecords(featureRecords: FeatureRecord[]): FeatureCollection<Geometry, GeoJsonProperties> | null {
 
-                const record = dataset.records[recordId];
-
-                arr.push({
-                    latitude: (record.getValue('latitude') as number),
-                    longitude: (record.getValue('longitude') as number),
-                    properties: {
-                        [FeatureProperty.Name]: record.getValue('name') as string,
-                        [FeatureProperty.Description]: record.getValue('description') as string,
-                        [FeatureProperty.Category]: (record.getValue('category') as any)?.name || null,
-                        [FeatureProperty.DateAndTime]: record.getValue('dateAndTime') || null
-                    }
-                });
-                return arr;
-            },[]);
-
-            return coordinates.length ? geoJSONBuildHelper.createGeoJson(coordinates) : null;
+        if (!featureRecords || !featureRecords.length) {
+            return null;
         }
 
-        return null;
+        return geoJSONBuildHelper.createGeoJson(featureRecords);
     }
+
+    private getFeatureRecords(dataset: ComponentFramework.PropertyTypes.DataSet): FeatureRecord[] {
+
+        if (!dataset || !dataset.sortedRecordIds?.length) {
+            return [];
+        }
+          
+        return dataset.sortedRecordIds.reduce(
+            (arr: FeatureRecord[], recordId) => {
+
+            const record = dataset.records[recordId];
+
+            arr.push({
+                latitude: (record.getValue('latitude') as number),
+                longitude: (record.getValue('longitude') as number),
+                properties: {
+                    [FeatureProperty.Name]: record.getValue('name') as string || null,
+                    [FeatureProperty.Description]: record.getValue('description') as string || null,
+                    [FeatureProperty.Category]: (record.getValue('category') as any)?.name || null,
+                    [FeatureProperty.DateAndTime]: record.getValue('dateAndTime') || null
+                }
+            });
+            return arr;
+        },[]);
+    }
+
 
     private getInitialLocationEntityId(): string | null {
         const entityTypeName = (this.context as any).page?.entityTypeName;
@@ -212,7 +245,7 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
     }
 
     private async getInitialGeoJSONFromLinkedEntityFile(entityId: string): 
-        Promise< FeatureCollection<Geometry | null, GeoJsonProperties> | null> {
+        Promise<FeatureCollection<Geometry | null, GeoJsonProperties> | null> {
         
         const orgUrl = (this.context as any).page.getClientUrl();
         console.log('ORG URL: ', orgUrl);
@@ -223,8 +256,12 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
                 entityId,
                 `?$select=${this.initialFileColumnName}`
             );
-
+            
             console.log('Results from API call: ', results);
+
+            if (!results) {
+                return null;
+            }
             
             const downloadUrl = `${orgUrl}/${config.apiDataVersionUrlFragment}/${this.initialLocationTableName}s(${entityId})/${this.initialFileColumnName}/$value`;
 
@@ -238,7 +275,7 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
 
             const initialGeoJSON = results[this.initialFileColumnName] ? await getInitialGeoJSONFromFile(downloadUrl, fileExtension): null;            
 
-            return results ? initialGeoJSON : null;
+            return initialGeoJSON;
 
         } catch (error) {
             console.error('Error retrieving initial location data:', error);
@@ -300,8 +337,8 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
                     return;
                 }
                 
-                const name = feature.getProperty(FeatureProperty.Name);
-                const description = feature.getProperty(FeatureProperty.Description);
+                const name = feature.getProperty(FeatureProperty.Name) || null;
+                const description = feature.getProperty(FeatureProperty.Description) || null;
 
                 const infoWindowContent = markerHelper.createInfoWindowContent(description);
 
@@ -324,11 +361,14 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
         );
     }
 
-    private setupInfoWindow(content: string | Element | null, position: google.maps.LatLng | null, headerContent: string): void {
+    private setupInfoWindow(content: string | Element | null, position: google.maps.LatLng | null, headerContent: string | null): void {
         this.infoWindow.setContent(content);
         this.infoWindow.setPosition(position);
         this.infoWindow.setOptions({ pixelOffset: new google.maps.Size(0, -20), maxWidth: config.maxInfoWindowWidthInPx, minWidth: config.minInfoWindowWidthInPx });
-        (this.infoWindow as any).setHeaderContent(headerContent);
+        
+        if (headerContent) {
+            (this.infoWindow as any).setHeaderContent(headerContent);
+        }
     }
  
     private addGeoJSONOnMap(geoJSON: FeatureCollection<Geometry | null, GeoJsonProperties> | null): void {
@@ -344,20 +384,25 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
     }
 
     private displayGeoJSONFromDataSet(): void {
+
+        this.clearMarkers();
+
         const features = this.geoJSON?.features;
 
         if (!features?.length) {
             return;
         }
 
+        // this.addGeoJSONOnMap(this.geoJSON);
+
         features.forEach(feature => {
             const coords = (feature.geometry as Point)?.coordinates;
             const latLng = new google.maps.LatLng(coords[1], coords[0]);
 
-            const dateAndTimeText = feature.properties?.[FeatureProperty.DateAndTime] ? new Date(feature.properties?.[FeatureProperty.DateAndTime]).toLocaleString() : undefined ;
-            const name = feature.properties?.[FeatureProperty.Name];
-            const description = feature.properties?.[FeatureProperty.Description];
-            const category = feature.properties?.[FeatureProperty.Category];
+            const dateAndTimeText = feature.properties?.[FeatureProperty.DateAndTime] ? new Date(feature.properties?.[FeatureProperty.DateAndTime]).toLocaleString() : null ;
+            const name = feature.properties?.[FeatureProperty.Name] || null;
+            const description = feature.properties?.[FeatureProperty.Description] || null;
+            const category = feature.properties?.[FeatureProperty.Category] || null;
 
             const infoWindowContent = markerHelper.createInfoWindowContent(description, dateAndTimeText, category);
 
@@ -372,14 +417,28 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
             const markerClickListener = marker?.addListener('gmp-click', () => {
                 this.infoWindow.close();
                 console.log('closed the info window!');
-                this.setupInfoWindow(infoWindowContent, latLng, name);
-                this.infoWindow.open(this.map);
+                if (infoWindowContent || name) {
+                    this.setupInfoWindow(infoWindowContent, latLng, name);
+                    this.infoWindow.open(this.map);
+                }                
             });
 
             if (markerClickListener) {
-                this.eventListeners.push(markerClickListener);
+                this.markerEventListeners.push(markerClickListener);
             }
         })      
+    }
+
+    private clearMarkers(): void {
+        this.markerEventListeners.forEach(listener => {
+            google.maps.event.removeListener(listener);
+        });
+        this.markerEventListeners = [];
+
+        this.markers.forEach(marker => {
+            marker.map = null;
+        });
+        this.markers = [];
     }
 
     private createMarkerElement(position: google.maps.LatLng, content: Node | null | undefined, clickable: boolean): google.maps.marker.AdvancedMarkerElement | null {
@@ -395,10 +454,9 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
         });
     }   
 
-    private applyCenterAndZoomBoundsOnMap(geoJSON: FeatureCollection<Geometry | null, GeoJsonProperties> | null ): void {
-        if (!geoJSON) {
-            return;
-        }
+    private applyCenterAndZoomBoundsOnMap(): void {
+
+        const geoJSON = this.geoJSON ? this.geoJSON : this.initialGeoJSON;
 
         const centerAndZoomBounds = getCenterAndZoomGeoJsonBounds(geoJSON);
         
@@ -407,6 +465,19 @@ export class ActivityMapPointsComponent2 implements ComponentFramework.StandardC
             this.map?.fitBounds(centerAndZoomBounds, 0);
             console.log('Map bounds after fitting bounds: ', this.map?.getBounds()?.toJSON());
             console.log('Map after fitting bounds: ', this.map);
+        } else {
+            this.map?.setZoom(config.defaultZoom);
+        }
+    }
+
+    private toggleMarkerCountWarning(): void {
+        const markerCountWarningElement = this.container.getElementsByClassName('marker-count-warning-container')?.[0];
+
+        if ((this.featureRecords?.length >= config.maxMarkerCount) && !markerCountWarningElement) {
+            const markerCountWarningElement = markerHelper.getMarkerCountWarningElement();
+            this.container.appendChild(markerCountWarningElement);
+        } else if (markerCountWarningElement) {
+            this.container.removeChild(markerCountWarningElement);
         }
     }
 }
